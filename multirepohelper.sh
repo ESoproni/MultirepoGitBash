@@ -91,9 +91,10 @@ collect_list_branches_params() {
     done
 }
 
+BASEDIR=$(dirname "$0")
+cd "$BASEDIR"
 get_repos_root_path
-
-export SCRIPT_ABS_PATH="$PWD/scripts"
+export SCRIPT_ABS_PATH="$BASEDIR/scripts"
 cd "$ROOTPATH"
 
 loop_dirs() {
