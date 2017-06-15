@@ -7,14 +7,14 @@ LIST_LOCAL_BRANCHES=$1
 LIST_REMOTE_BRANCHES=$2
 
 if [[ $LIST_LOCAL_BRANCHES =~ [Yy] ]]; then
-	echo LOCAL BRANCHES
-	git branch
-fi	
+    echo LOCAL BRANCHES
+    git branch
+fi
 
 if [[ $LIST_REMOTE_BRANCHES =~ [Yy] ]]; then
-	git remote update origin --prune
-	echo REMOTE BRANCHES
-	git branch -r
+    git remote update origin --prune
+    echo REMOTE BRANCHES
+    git branch -r
 fi
 
 

@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/sh
 # Remove all local branches where the referenced remote branch has been removed
 
 git fetch --all --prune
