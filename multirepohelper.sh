@@ -91,7 +91,8 @@ collect_list_branches_params() {
     done
 }
 
-BASEDIR=$(dirname "$0")
+BASEDIR=`dirname $(readlink -f "$0")`
+echo $BASEDIR
 cd "$BASEDIR"
 get_repos_root_path
 export SCRIPT_ABS_PATH="$BASEDIR/scripts"
