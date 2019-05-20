@@ -15,13 +15,103 @@
 # If the file doesn't exist, it will be created when you run this script.
 #
 
+# Set color codes
+COLOR_RESET='\e[0m'
+COLOR_RED='\e[0;31m'
+COLOR_GREEN='\e[0;32m'
+COLOR_ORANGE='\e[0;33m'
+COLOR_BLUE='\e[0;34m'
+COLOR_PURPLE='\e[0;35m'
+COLOR_CYAN='\e[0;36m'
+COLOR_LIGHTGRAY='\e[0;37m'
+COLOR_YELLOW='\e[1;33m'
+COLOR_WHITE='\e[1;37m'
+
 $LIST_LOCAL_TAGS
 $LIST_REMOTE_TAGS
 $SHOW_PEELED_TAGS
 $LIST_LOCAL_BRANCHES
 $LIST_REMOTE_BRANCHES
 $ROOTPATH
+			
+# Update local references for remote branches
+# Input: branch name to check out
+checkout_branch() {
+  git fetch --all --prune --tags >/dev/null
 
+  if [ "$1" = "" ] ; then
+      echo -e "${COLOR_RED}>>> No branch name entered${COLOR_RESET}"
+	  return 1
+  else
+      echo \>\>\> Checking out branch "$1"
+      git checkout $1
+  fi
+}
+
+# Update local references for remote branches
+# Input: branch name to merge to develop branch
+merge_branch_to_develop() {
+	git fetch --all --prune --tags >/dev/null
+
+	git checkout develop
+
+	#If not on develop branch, don't merge
+	ON_DEVELOP=`git branch | grep "*"`
+	if [[ -z $ON_DEVELOP ]]; then
+		echo -e "${COLOR_RED}>>> not in develop branch${COLOR_RESET}"
+		exit
+	fi
+
+	BRANCH_TO_MERGE=$1
+	#Pull latest changes
+	PULL_STATUS=`git pull`
+
+	if [[ $PULL_STATUS = "Already up-to-date." ]]; then
+		echo Merging $BRANCH_TO_MERGE
+		MERGE_FAILED=`git merge $BRANCH_TO_MERGE --no-ff | grep "Automatic merge failed"`
+		if [[ -z "$MERGE_FAILED" ]]; then
+			echo -e "${COLOR_GREEN}Merge went well. Committing.${COLOR_RESET}"
+			git commit -q
+		else
+			echo -e "${COLOR_RED}$MERGE_FAILED${COLOR_RESET}"
+		fi
+	else
+		echo -e "${COLOR_RED}!!! Local repo is not up to date with remote. Pull changes from remote before merging!${COLOR_RESET}"
+	fi
+}
+
+# Update local references for remote branches
+# Merges changes from develop to current branch
+merge_from_develop() {
+	git fetch --all --prune --tags >/dev/null
+
+	#If in develop branch, don't merge
+	CURRENT_BRANCH=`git branch | grep '\*' | cut -d ' ' -f2`
+	if [[ $CURRENT_BRANCH = "develop" ]]; then
+		exit
+	fi
+
+	#If there is no develop branch, don't merge
+	DEVELOP_EXISTS=`git branch -r | grep "origin/develop"`
+	if [[ -z $DEVELOP_EXISTS ]]; then
+		echo ">>> origin/develop does not exist"
+		exit
+	fi
+
+	#Pull latest changes
+	PULL_STATUS=`git pull`
+
+	if [[ $PULL_STATUS = "Already up-to-date." ]]; then
+		MERGE_FAILED=`git merge origin/develop | grep "Automatic merge failed"`
+		if [[ -z "$MERGE_FAILED" ]]; then
+			git commit -q
+		else
+			echo $MERGE_FAILED
+		fi
+	else
+		echo !!! Local repo is not up to date with remote. Pull changes from remote before merging!
+	fi
+}			
 get_repos_root_path() {
 
   ROOTPATHFILE="./REPOROOTPATH"
@@ -112,8 +202,13 @@ loop_dirs() {
             echo -------
             echo In directory `pwd`
 
-            "$SCRIPT_ABS_PATH"/$1 $2 $3 $4
-
+			$1 $2 $3 $4
+            #Eva "$SCRIPT_ABS_PATH"/$1 $2 $3 $4
+			COMMAND_STATUS=$?
+			if [ $COMMAND_STATUS -ne 0 ]; then
+			   echo -e "${COLOR_RED}There was an error, command has not been executed for all repositories ${COLOR_RESET}"
+			   return
+			fi
             cd ..
         fi
     done
@@ -152,10 +247,11 @@ while true; do
             *) echo "Invalid option. Try another one.";continue;;
         esac
 
-        loop_dirs $SELECTED.sh $param_1 $param_2 $param_3
-        param_1=""
+        #Eva loop_dirs $SELECTED.sh $param_1 $param_2 $param_3
+		loop_dirs $SELECTED $param_1 $param_2 $param_3
+		param_1=""
         param_2=""
-        param_3=""
+        param_3=""		
         break;
     done
 done

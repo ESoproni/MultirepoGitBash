@@ -1,5 +1,5 @@
 #!/bin/bash
-# Input branch name to check out
+# Input branch name to merge to develop branch
 
 # Update local references for remote branches
 git fetch --all --prune --tags >/dev/null
