@@ -346,7 +346,6 @@ BASEDIR=`dirname $(readlink -f "$0")`
 echo $BASEDIR
 cd "$BASEDIR"
 get_repos_root_path
-export SCRIPT_ABS_PATH="$BASEDIR/scripts"
 cd "$ROOTPATH"
 
 loop_dirs() {
@@ -375,12 +374,6 @@ loop_dirs() {
         fi
     done
 }
-
-if  [ ! -d "$SCRIPT_ABS_PATH" ]; then
-    echo $SCRIPT_ABS_PATH is not a valid path
-    echo Path to the directory containing the scripts for multirepohelper.sh must be set in multirepohelper.sh SCRIPT_ABS_PATH
-    exit 0
-fi
 
 while true; do
     printf "\n============================\nROOTPATH=%b\n============================\n\n" "$ROOTPATH"
