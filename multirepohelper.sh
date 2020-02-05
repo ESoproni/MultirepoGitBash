@@ -50,7 +50,8 @@ checkout_branch() {
 
 # Display name of current branch
 current_branch() {
-  echo Branch: `git branch | grep '\*' | cut -d ' ' -f2`
+  CURRENT_BRANCH=`git branch | grep '\*' | cut -d ' ' -f2`
+  echo -e "Branch: ${COLOR_CYAN}${CURRENT_BRANCH}${COLOR_RESET}"
 }
 
 # Execute a fetch including tags
@@ -67,13 +68,13 @@ list_branches() {
 	LIST_REMOTE_BRANCHES=$2
 
 	if [[ $LIST_LOCAL_BRANCHES =~ [Yy] ]]; then
-			echo LOCAL BRANCHES
+			echo -e "${COLOR_YELLOW} LOCAL BRANCHES ${COLOR_RESET}"
 			git branch
 	fi
 
 	if [[ $LIST_REMOTE_BRANCHES =~ [Yy] ]]; then
 			git remote update origin --prune
-			echo REMOTE BRANCHES
+			echo -e "${COLOR_YELLOW} REMOTE BRANCHES ${COLOR_RESET}"
 			git branch -r
 	fi
 }
@@ -184,6 +185,7 @@ pull_branches_behind() {
 	git branch -vv | gawk '{print $1,$4}' | grep 'behind]' | gawk '{print $1}' | xargs git pull origin
 }
 
+
 # Updates local references for remote branches
 # Pulls all changes for the repo
 # Input: branch name if you want that branch to be updated with the remote changes
@@ -195,18 +197,20 @@ pull_repo() {
 	CURRENT_BRANCH=`git branch | grep '\*' | cut -d ' ' -f2`
 
 	if [ "$1" = "" ] || [ "$1" = "$CURRENT_BRANCH" ] ; then
-		echo \>\>\> On branch $CURRENT_BRANCH. Pulling latest changes.
+		echo -e "${COLOR_YELLOW}>>> On branch $CURRENT_BRANCH. Pulling latest changes.${COLOR_CYAN}"
+#TODO: if git pull fails, display message but let the other repositories go on
 		git pull
+      echo -e "${COLOR_RESET}"
 	else
-		echo \>\>\> On branch $CURRENT_BRANCH. Checking out branch "$1"
+		echo ">>> On branch ${CURRENT_BRANCH}. Checking out branch ${1}"
 
 		if [[ `git checkout $1` ]]; then
 			git pull
-			echo \>\>\>Switching back to previously checked out branch
+			echo ">>>Switching back to previously checked out branch"
 			git checkout $CURRENT_BRANCH
 		else
-			echo \>\>\>Branch $1 does not exist in this repository
-			echo \!\!\! Check out and pull preferred branch manually
+			echo ">>>Branch $1 does not exist in this repository"
+			echo "!!! Check out and pull preferred branch manually"
 		fi
 	fi
 }
@@ -257,13 +261,26 @@ remove_tags_starting_with() {
 			esac
 	done
 }
-# Display status for all repos
+
+# Display status 
 status_repo() {
 	printf "\n"
 	# Update local references for remote branches
 	git fetch --all --prune --tags >/dev/null
-	git status
+	
+   OUTPUT="$(git status)"
+   if [[ $OUTPUT == *"nothing to commit, working tree clean" ]]; then
+      echo -e "${COLOR_GREEN}${OUTPUT}${COLOR_RESET}"
+   else
+      git status
+   fi
 }
+
+# Get current branch name
+get_current_branch_name() {
+   return `git branch | grep '\*' | cut -d ' ' -f2`
+}
+
 #Check if we are in a git repo directory
 in_git_repo() {
   if [ -e ".git" ]; then
@@ -288,7 +305,7 @@ get_repos_root_path() {
     echo "=== ERROR === Root path not set"
     exit;
   elif [ ! -d "$ROOTPATH" ]; then
-    echo "=== ERROR === Directory set in $ROOTPATH is not a valid directory. The directory must be on the first line of the file!"
+    echo "=== ERROR === Directory set in $ROOTPATH is not a valid directory. The directory must be on the first line of the REPOROOTPATH file!"
     exit;
   fi
 }
@@ -353,7 +370,6 @@ loop_dirs() {
         if [ -d  "${D}" ]; then
             cd "${D}"
 
-            #"$SCRIPT_ABS_PATH"/in_git_repo.sh
 			in_git_repo
             if [  $? -eq 0 ]; then
                cd ..
@@ -361,10 +377,9 @@ loop_dirs() {
             fi
 
             echo -------
-            echo In directory `pwd`
+            echo -e "In directory ${COLOR_CYAN}`pwd`${COLOR_RESET}"
 
-			$1 $2 $3 $4
-            #Eva "$SCRIPT_ABS_PATH"/$1 $2 $3 $4
+			$1 $2 $3 $4            
 			COMMAND_STATUS=$?
 			if [ $COMMAND_STATUS -ne 0 ]; then
 			   echo -e "${COLOR_RED}There was an error, command has not been executed for all repositories ${COLOR_RESET}"
